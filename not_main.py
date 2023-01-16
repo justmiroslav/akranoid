@@ -5,8 +5,17 @@ import time
 WIDTH = 800
 HEIGHT = 600
 lives = 3
-heart_image = pg.image.load("heart.jpg")
+heart_image = pg.image.load("heart.png")
 heart = pg.transform.scale(heart_image, (40, 40))
+heart_x = WIDTH // 2
+heart_y = 0
+heart_dy = 1
+heart_timer = 0
+bonus_x = WIDTH - 20
+bonus_y = 0
+bonus_dy = 3
+bonus_timer = 0
+bonus_start = 0
 game_over = False
 game_win = False
 
@@ -119,7 +128,7 @@ for i in range(6):
 
 
 def draw():
-    global game_win
+    global game_win, heart_x, heart_y, lives, bonus_x, bonus_y
     screen.clear()
     screen.fill((255, 155, 0))
     paddle.draw()
@@ -127,6 +136,10 @@ def draw():
     for obstacle in obstacles:
         obstacle.draw()
     if not game_over:
+        if pg.time.get_ticks() >= 10000:
+            if pg.time.get_ticks() >= 25000:
+                screen.draw.filled_circle((bonus_x, bonus_y), 20, "white")
+            screen.blit(heart, (heart_x, heart_y))
         for p in range(lives):
             screen.blit(heart, (4 + p * 50, 10))
         if not any(obstacle.active for obstacle in obstacles):
@@ -139,8 +152,33 @@ def draw():
 def update():
     if not game_over:
         if not game_win:
+            global heart_timer, heart_x, heart_y, heart_dy, lives, bonus_x, bonus_y, bonus_dy, bonus_timer, bonus_start
             ball.update()
             paddle.on_mouse_move(pg.mouse.get_pos())
+            timer = pg.time.get_ticks()
+            if timer - heart_timer >= 10000:
+                if timer - bonus_timer >= 25000:
+                    bonus_x = WIDTH - 20
+                    bonus_y = 0
+                    bonus_timer = timer
+                heart_x = WIDTH // 2
+                heart_y = 0
+                heart_timer = timer
+            heart_y += heart_dy
+            bonus_y += bonus_dy
+            add_platform = pg.Rect(paddle.x, paddle.y, paddle.width, paddle.height)
+            add_bonus = pg.Rect(bonus_x, bonus_y, 20, 20)
+            if heart_y + 20 >= HEIGHT - paddle.height:
+                if paddle.x <= heart_x <= paddle.x + paddle.width:
+                    lives += 1
+                    heart_y = -heart_y
+            if add_bonus.colliderect(add_platform):
+                paddle.width *= 1.5
+                bonus_y = -bonus_y
+                bonus_start = timer
+            if pg.time.get_ticks() - bonus_start >= 3000:
+                paddle.width = 150
+                bonus_start = 0
         else:
             time.sleep(1.2)
             pg.quit()
