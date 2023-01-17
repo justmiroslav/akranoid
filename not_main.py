@@ -16,6 +16,8 @@ bonus_y = 0
 bonus_dy = 3
 bonus_timer = 0
 bonus_start = 0
+ball_speed = 1
+speed_time = 0
 game_over = False
 game_win = False
 
@@ -41,8 +43,8 @@ class Ball:
         self.x = WIDTH // 2
         self.y = HEIGHT // 2
         self.radius = 15
-        self.dx = 2
-        self.dy = 2
+        self.dx = 3
+        self.dy = 3
 
     def draw(self):
         screen.draw.filled_circle((self.x, self.y), self.radius, "red")
@@ -67,13 +69,13 @@ class Ball:
                 if lives // 2:
                     self.x = WIDTH // 2
                     self.y = HEIGHT // 2
-                    self.dx = -8
-                    self.dy = 8
+                    self.dx = -3
+                    self.dy = 3
                 else:
                     self.x = WIDTH // 2
                     self.y = HEIGHT // 2
-                    self.dx = 8
-                    self.dy = 8
+                    self.dx = 3
+                    self.dy = 3
             else:
                 global game_over
                 game_over = True
@@ -152,18 +154,21 @@ def draw():
 def update():
     if not game_over:
         if not game_win:
-            global heart_timer, heart_x, heart_y, heart_dy, lives, bonus_x, bonus_y, bonus_dy, bonus_timer, bonus_start
+            global heart_timer, heart_x, heart_y, heart_dy, lives, bonus_x, bonus_y, bonus_dy, bonus_timer, bonus_start, ball_speed, speed_time
             ball.update()
             paddle.on_mouse_move(pg.mouse.get_pos())
             timer = pg.time.get_ticks()
+            ball_timer = pg.time.get_ticks()
             if timer - heart_timer >= 10000:
                 if timer - bonus_timer >= 25000:
                     bonus_x = WIDTH - 20
                     bonus_y = 0
-                    bonus_timer = timer
+                    bonus_timer = ball_timer
                 heart_x = WIDTH // 2
                 heart_y = 0
                 heart_timer = timer
+                ball_speed *= 1.5
+                speed_time = timer
             heart_y += heart_dy
             bonus_y += bonus_dy
             add_platform = pg.Rect(paddle.x, paddle.y, paddle.width, paddle.height)
@@ -179,6 +184,11 @@ def update():
             if pg.time.get_ticks() - bonus_start >= 3000:
                 paddle.width = 150
                 bonus_start = 0
+            if speed_time >= 10000:
+                ball.x += ball.dx * ball_speed
+                ball.y += ball.dy * ball_speed
+            if ball.y >= HEIGHT - paddle.height and (ball.x < paddle.x or ball.x > paddle.x + paddle.width):
+                ball_speed = 1
         else:
             time.sleep(1.2)
             pg.quit()
